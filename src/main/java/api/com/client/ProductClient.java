@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.core.ParameterizedTypeReference;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -33,8 +34,7 @@ public class ProductClient {
                 .uri("/product/{id}/similarids", productId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
-                .bodyToFlux(String.class)
-                .collectList()
+                .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
                 .timeout(timeout)
                 .doOnError(e -> log.warn("Error fetching similarids for {}: {}", productId, e.getMessage()))
                 .onErrorResume(e -> Mono.just(List.of()));
