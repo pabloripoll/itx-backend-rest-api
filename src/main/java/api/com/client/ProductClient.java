@@ -1,9 +1,9 @@
 package api.com.client;
 
+import api.com.config.ProductApiProperties;
 import api.com.model.ProductDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class ProductClient {
@@ -20,19 +21,13 @@ public class ProductClient {
     private final WebClient webClient;
     private final Duration timeout;
 
-    public ProductClient(
-            WebClient.Builder builder,
-            @Value("${product.api.base-url}") String baseUrl,
-            @Value("${product.api.timeout-ms}") long timeoutMs
-    ) {
-        this.webClient = builder.baseUrl(baseUrl).build();
-        this.timeout = Duration.ofMillis(timeoutMs);
+    public ProductClient(WebClient.Builder builder, ProductApiProperties props) {
+        this.webClient = builder
+                .baseUrl(Objects.requireNonNull(props.getBaseUrl(), "product.api.base-url must be set"))
+                .build();
+        this.timeout = Duration.ofMillis(props.getTimeoutMs());
     }
 
-    /**
-     * Returns the list of similar product IDs for a given product.
-     * Emits empty if the product is not found (404).
-     */
     public Mono<List<String>> getIds(String productId) {
         return webClient.get()
                 .uri("/product/{id}/similarids", productId)
@@ -45,10 +40,6 @@ public class ProductClient {
                 .onErrorResume(e -> Mono.just(List.of()));
     }
 
-    /**
-     * Returns the product detail for a given ID.
-     * Returns empty Mono if not found (404), errored (5xx), or timed out.
-     */
     public Mono<ProductDetail> getProductDetail(String productId) {
         return webClient.get()
                 .uri("/product/{id}", productId)
