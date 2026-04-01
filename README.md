@@ -53,10 +53,6 @@ Once the container is built and running, you can access to it by
 $ make apirest-ssh
 ```
 
-
-
-So, you can run the following commands
-
 ### Developing new features or maintain the API inside the container
 
 Start REST API in development mode *(faster way to test the application)*
